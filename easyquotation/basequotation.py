@@ -50,7 +50,7 @@ class BaseQuotation:
             'Accept-Encoding': 'gzip'
         }
         try:
-            async with self.aiohttp.get(self.stock_api + params, headers=headers) as r:
+            async with aiohttp.get(self.stock_api + params, headers=headers) as r:
                 response_text = await r.text()
                 return response_text
         except asyncio.TimeoutError:
