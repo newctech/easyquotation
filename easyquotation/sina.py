@@ -7,7 +7,7 @@ class Sina(BaseQuotation):
     """新浪免费行情获取"""
     max_num = 800
     grep_detail = re.compile(r'(\d+)=([^\s][^,]+?)%s%s' % (r',([\.\d]+)' * 29, r',([-\.\d:]+)' * 2))
-    stock_api = 'http://hq.sinajs.cn/?format=text&list='
+    stock_api = 'http://hq.sinajs.cn/?_=1&list='
 
     def format_response_data(self, rep_data):
         stocks_detail = ''.join(rep_data)
