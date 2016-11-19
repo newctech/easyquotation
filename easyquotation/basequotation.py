@@ -57,7 +57,10 @@ class BaseQuotation:
             return None
 
     def get_stock_data(self, stock_list):
-        self._session = aiohttp.ClientSession()
+        try:
+            self._session = aiohttp.ClientSession()
+        except:
+            self._session.close()
         coroutines = []
 
         for params in stock_list:
