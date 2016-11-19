@@ -50,22 +50,18 @@ class BaseQuotation:
             'Accept-Encoding': 'gzip'
         }
         try:
-            async with self._session.get(self.stock_api + params, timeout=5, headers=headers) as r:
+            async with self.aiohttp.get(self.stock_api + params, headers=headers) as r:
                 response_text = await r.text()
                 return response_text
         except asyncio.TimeoutError:
             return None
 
     def get_stock_data(self, stock_list):
-        try:
-            self._session = aiohttp.ClientSession()
-        except:
-            self._session.close()
         coroutines = []
-
         for params in stock_list:
             coroutine = self.get_stocks_by_range(params)
             coroutines.append(coroutine)
+
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -73,7 +69,6 @@ class BaseQuotation:
             asyncio.set_event_loop(loop)
         res = loop.run_until_complete(asyncio.gather(*coroutines))
 
-        self._session.close()
         return self.format_response_data([x for x in res if x is not None])
 
     def format_response_data(self, rep_data):
