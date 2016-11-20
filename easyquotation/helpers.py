@@ -13,6 +13,7 @@ def update_stock_codes():
     grep_stock_codes = re.compile('~(\d+)`')
     response = requests.get(all_stock_codes_url)
     all_stock_codes = grep_stock_codes.findall(response.text)
+    all_stock_codes.extend(["sh000001", "sz399001", "sh000300", "sz399006", "sz399415"])
     with open(stock_code_path(), 'w') as f:
         f.write(json.dumps(dict(stock=all_stock_codes)))
 
