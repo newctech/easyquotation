@@ -36,7 +36,9 @@ class BaseQuotation:
 
     @property
     def all(self):
-        return self.get_stock_data(self.stock_list)
+        stock_data = self.get_stock_data(self.stock_list)
+        stock_data['sh000001'] = self.stocks('sh000001')['000001']
+        return stock_data
 
     def stocks(self, stock_codes):
         if type(stock_codes) is not list:
