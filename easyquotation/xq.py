@@ -13,7 +13,7 @@ class Xueqiu:
 
     def __init__(self):
         self.headers = {
-            'Cookie': 'xq_a_token=243c05965ae56c4d6d640d0aed227dc3d6209ee1;u=9558902513',
+            'Cookie': 'xq_a_token=xxxxxxxx;u=xxxxxxx,
             'User-Agent': 'Xueqiu Android 8.8',
             'Host': 'stock.xueqiu.com',
             'Pragma': 'no-cache',

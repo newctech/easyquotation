@@ -14,6 +14,8 @@ if PY_VERSION < (3, 5):
 def use(source):
     if source in ['sina']:
         return Sina()
+    if source in ['xq']:
+        return Xueqiu()
     if source in ['leverfun', 'lf']:
         return Leverfun()
     if source in ['jsl']:
