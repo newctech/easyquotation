@@ -4,6 +4,7 @@ from .boc import Boc
 from .jsl import Jsl
 from .leverfun import Leverfun
 from .sina import Sina
+from .xq import Xueqiu
 from .tencent import Tencent
 
 PY_VERSION = sys.version_info[:2]
