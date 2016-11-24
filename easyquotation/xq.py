@@ -27,7 +27,7 @@ class Xueqiu:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
-
+        self.__detailstocks = []
     def get_pankou_data(self, code, retry_count=3, pause=0.001):
         """
         获取股票盘口数据
@@ -37,8 +37,9 @@ class Xueqiu:
                       股票代码 e.g. 600848 或SH000001
         return
         -------
-            {"symbol":"SH601211","time":"Nov 23, 2016 2:59:58 PM","bp1":18.85,"bc1":447,"bp2":18.84,"bc2":248,"bp3":18.83,"bc3":1088,"bp4":18.82,"bc4":666,"bp5":18.81,"bc5":689,"bp6":0.0,"bc6":0,"bp7":0.0,"bc7":0,"bp8":0.0,"bc8":0,"bp9":0.0,"bc9":0,"bp10":0.0,"bc10":0,"current":18.85,"sp1":18.86,"sc1":969,"sp2":18.87,"sc2":92,"sp3":18.88,"sc3":287,"sp4":18.89,"sc4":582,"sp5":18.9,"sc5":1133,"sp6":0.0,"sc6":0,"sp7":0.0,"sc7":0,"sp8":0.0,"sc8":0,"sp9":0.0,"sc9":0,"sp10":0.0,"sc10":0,"buypct":50.6,"sellpct":49.4,"diff":75,"ratio":1.21}
+            [{"symbol":"SH601211","time":"Nov 23, 2016 2:59:58 PM","bp1":18.85,"bc1":447,"bp2":18.84,"bc2":248,"bp3":18.83,"bc3":1088,"bp4":18.82,"bc4":666,"bp5":18.81,"bc5":689,"bp6":0.0,"bc6":0,"bp7":0.0,"bc7":0,"bp8":0.0,"bc8":0,"bp9":0.0,"bc9":0,"bp10":0.0,"bc10":0,"current":18.85,"sp1":18.86,"sc1":969,"sp2":18.87,"sc2":92,"sp3":18.88,"sc3":287,"sp4":18.89,"sc4":582,"sp5":18.9,"sc5":1133,"sp6":0.0,"sc6":0,"sp7":0.0,"sc7":0,"sp8":0.0,"sc8":0,"sp9":0.0,"sc9":0,"sp10":0.0,"sc10":0,"buypct":50.6,"sellpct":49.4,"diff":75,"ratio":1.21}]
         """
+        stocks_list = []
         symbol = self._code_to_symbol(code)
         url = self.pankou_api%(symbol)
         for _ in range(retry_count):
@@ -52,7 +53,8 @@ class Xueqiu:
             except Exception as e:
                 print(e)
             else:
-                return stocks
+                stocks_list.append(stocks)
+                return stocks_list
 
     def get_detail_data(self, code, retry_count=3, pause=0.001):
         """
@@ -63,24 +65,32 @@ class Xueqiu:
                       股票代码 e.g. 600848 或SH000001
         return
         -------
-        {"list":
             [{"s":"SH601211","t":1479884398000,"ts":"14:59:58","c":18.85,"chg":-0.14,"pct":-0.74,"v":26400,"bp1":18.85,"sp1":18.86,"ttv":43696683,"type":-1,"avgPrice":18.99,"fileModifyTime":1479884406000},
             ...
         """
+        stocks_lists = []
         symbol = self._code_to_symbol(code)
         url = self.detail_api % (symbol)
         for _ in range(retry_count):
             time.sleep(pause)
-        try:
-            request = self.session.get(url)
-            stocks = json.loads(request.text)
-            if len(stocks['list']) == 0:  # no data
-                print('no data')
-                return None
-        except Exception as e:
-            print(e)
-        else:
-            return stocks
+            try:
+                request = self.session.get(url)
+                stocks = json.loads(request.text)
+                if len(stocks['list']) == 0:  # no data
+                    print('no data')
+                    return None
+            except Exception as e:
+                print(e)
+            else:
+                for stock in stocks['list']:
+                    if stock in self.__detailstocks:
+                        pass
+                    else:
+                        self.__detailstocks.append(stock)
+                        stocks_lists.append(stock)
+                        if len(self.__detailstocks) > 10:
+                            self.__detailstocks.pop(0)
+                return stocks_lists
 
     def get_realtime_data(self, code, retry_count=3, pause=0.001):
         """
@@ -92,23 +102,24 @@ class Xueqiu:
         return
         -------
         {"list":
-            [{"s":"SH601211","t":1479884398000,"ts":"14:59:58","c":18.85,"chg":-0.14,"pct":-0.74,"v":26400,"bp1":18.85,"sp1":18.86,"ttv":43696683,"type":-1,"avgPrice":18.99,"fileModifyTime":1479884406000},
-            ...
+            [{"s":"SH601211","t":1479884398000,"ts":"14:59:58","c":18.85,"chg":-0.14,"pct":-0.74,"v":26400,"bp1":18.85,"sp1":18.86,"ttv":43696683,"type":-1,"avgPrice":18.99,"fileModifyTime":1479884406000}]
         """
+        stocks_list = []
         symbol = self._code_to_symbol(code)
         url = self.realtime_api % (symbol)
         for _ in range(retry_count):
             time.sleep(pause)
-        try:
-            request = self.session.get(url)
-            stocks = json.loads(request.text)
-            if len(stocks['chartlist']) == 0:  # no data
-                print('no data')
-                return None
-        except Exception as e:
-            print(e)
-        else:
-            return stocks
+            try:
+                request = self.session.get(url)
+                stocks = json.loads(request.text)
+                if len(stocks['chartlist']) == 0:  # no data
+                    print('no data')
+                    return None
+            except Exception as e:
+                print(e)
+            else:
+                stocks_list.append(stocks['chartlist'][-1])
+                return stocks_list
 
     def get_k_data(self, code, start='', end='', autype='normal', ktype='1day', retry_count=3, pause=0.001):
         """
@@ -131,9 +142,8 @@ class Xueqiu:
                     重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
         return
         -------
-            {"chartlist":
             [{"volume":2068078,"open":23.65,"high":28.38,"close":28.38,"low":23.65,"chg":8.67,"percent":43.99,"turnrate":0.14,"ma5":28.38,"ma10":28.38,"ma20":28.38,"ma30":28.38,"dif":0.0,"dea":0.0,"macd":0.0,"time":"Fri Jun 26 00:00:00 +0800 2015"},
-            ...
+            ...]
         """
         symbol = self._code_to_symbol(code)
         now = str(int(time.time() * 1000))
@@ -143,19 +153,20 @@ class Xueqiu:
         if len(end) != 0:
             end_Array = time.strptime(end, "%Y-%m-%d %H:%M:%S")
         end = str(int(time.mktime(end_Array) * 1000))
-        url = self.realtime_api % (symbol)
+        url = self.kdata_api % (start, end, autype, symbol, ktype)
         for _ in range(retry_count):
             time.sleep(pause)
-        try:
-            request = self.session.get(url)
-            stocks = json.loads(request.text)
-            if len(stocks['chartlist']) == 0:  # no data
-                print('no data')
-                return None
-        except Exception as e:
-            print(e)
-        else:
-            return stocks
+            try:
+                request = self.session.get(url)
+                stocks = json.loads(request.text)
+                if len(stocks['chartlist']) == 0:  # no data
+                    print('no data')
+                    return None
+            except Exception as e:
+                print(e)
+            else:
+                stocks_lists = stocks['chartlist']
+                return stocks_lists
 
     def get_general_data(self, code, retry_count=3, pause=0.001):
         """
@@ -166,8 +177,9 @@ class Xueqiu:
                       股票代码 e.g. 600848 或SH000001
         return
         -------
-            {"SH601211":{"symbol":"SH601211","exchange":"SH","code":"601211","name":"国泰君安","current":"18.85",...
+            [{"SH601211":{"symbol":"SH601211","exchange":"SH","code":"601211","name":"国泰君安","current":"18.85..}]
         """
+        stocks_list = []
         symbol = self._code_to_symbol(code)
         url = self.general_api%(symbol)
         for _ in range(retry_count):
@@ -181,7 +193,8 @@ class Xueqiu:
             except Exception as e:
                 print(e)
             else:
-                return stocks
+                stocks_list.append(stocks[symbol])
+                return stocks_list
 
     def _code_to_symbol(self, code):
         """
@@ -198,8 +211,8 @@ class Xueqiu:
 
 if __name__ == '__main__':
     q = Xueqiu()
-    print(q.get_pankou_data('601211'))
-    print(q.get_detail_data('601211'))
-    print(q.get_realtime_data('601211'))
-    print(q.get_k_data('601211', '2016-11-15 9:30:00', '2016-11-23 15:00:00'))
-    print(q.get_general_data('601211'))
+    #print(q.get_pankou_data('601211'))
+    #print(q.get_detail_data('601211'))
+    #print(q.get_realtime_data('601211'))
+    #print(q.get_k_data('601211', '2016-11-15 9:30:00', '2016-11-23 15:00:00'))
+    #print(q.get_general_data('601211'))
