@@ -1,6 +1,7 @@
 import requests
 import json
 import time
+import datetime
 
 
 class Xueqiu:
@@ -27,7 +28,11 @@ class Xueqiu:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        self.__pankoustocks = []
         self.__detailstocks = []
+        self.__realtimestocks = []
+        self.__kstocks = []
+        self.__generalstocks = []
     def get_pankou_data(self, code, retry_count=3, pause=0.001):
         """
         获取股票盘口数据
@@ -46,14 +51,20 @@ class Xueqiu:
             time.sleep(pause)
             try:
                 request = self.session.get(url)
-                stocks = json.loads(request.text)
-                if len(stocks) == 0: #no data
+                stock = json.loads(request.text)
+                if len(stock) == 0: #no data
                     print('no data')
                     return None
             except Exception as e:
                 print(e)
             else:
-                stocks_list.append(stocks)
+                if stock in self.__pankoustocks:
+                    pass
+                else:
+                    self.__pankoustocks.append(stock)
+                    stocks_list.append(stock)
+                    if len(self.__pankoustocks) > 2:
+                        self.__pankoustocks.pop(0)
                 return stocks_list
 
     def get_detail_data(self, code, retry_count=3, pause=0.001):
@@ -118,10 +129,16 @@ class Xueqiu:
             except Exception as e:
                 print(e)
             else:
-                stocks_list.append(stocks['chartlist'][-1])
+                if stocks['chartlist'][-1] in self.__realtimestocks:
+                    pass
+                else:
+                    self.__realtimestocks.append(stocks['chartlist'][-1])
+                    stocks_list.append(stocks['chartlist'][-1])
+                    if len(self.__realtimestocks) > 2:
+                        self.__realtimestocks.pop(0)
                 return stocks_list
 
-    def get_k_data(self, code, start='', end='', autype='normal', ktype='1day', retry_count=3, pause=0.001):
+    def get_kall_data(self, code, start='', end='', autype='normal', ktype='1day', retry_count=3, pause=0.001):
         """
         获取股票K线数据
         ---------
@@ -146,13 +163,12 @@ class Xueqiu:
             ...]
         """
         symbol = self._code_to_symbol(code)
-        now = str(int(time.time() * 1000))
         if len(start) != 0:
             start_Array = time.strptime(start, "%Y-%m-%d %H:%M:%S")
             start = str(int(time.mktime(start_Array) * 1000))
         if len(end) != 0:
             end_Array = time.strptime(end, "%Y-%m-%d %H:%M:%S")
-        end = str(int(time.mktime(end_Array) * 1000))
+            end = str(int(time.mktime(end_Array) * 1000))
         url = self.kdata_api % (start, end, autype, symbol, ktype)
         for _ in range(retry_count):
             time.sleep(pause)
@@ -167,6 +183,46 @@ class Xueqiu:
             else:
                 stocks_lists = stocks['chartlist']
                 return stocks_lists
+
+    def get_k_data(self, code, autype='normal', ktype='1day', retry_count=3, pause=0.001):
+        """
+        获取股票K线数据
+        ---------
+        Parameters:
+          code:string
+                      股票代码 e.g. 600848 或SH000001
+          start:string
+                      开始日期 format：YYYY-MM-DD HH:MM:SS为空时取当前日期
+          end:string
+                      结束日期 format：YYYY-MM-DD HH:MM:SS为空时取去年今日
+          autype:string
+                      复权类型，before-前复权 after-后复权 normal-不复权，默认为normal
+          ktype：string
+                      数据类型，1day=日k线 1week=周 1month=月 5m=5分钟 15m=15分钟 30m=30分钟，60m=60分钟，默认为1day
+          retry_count : int, 默认 3
+                     如遇网络等问题重复执行的次数
+          pause : int, 默认 0
+                    重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
+        return
+        -------
+            [{"volume":2068078,"open":23.65,"high":28.38,"close":28.38,"low":23.65,"chg":8.67,"percent":43.99,"turnrate":0.14,"ma5":28.38,"ma10":28.38,"ma20":28.38,"ma30":28.38,"dif":0.0,"dea":0.0,"macd":0.0,"time":"Fri Jun 26 00:00:00 +0800 2015"},
+            ...]
+        """
+        stocks_list = []
+        yesterday = datetime.datetime.now() + datetime.timedelta(days=-3)
+        yest_time = yesterday.strftime('%Y-%m-%d') + ' 15:00:00'
+        today_time = time.strftime('%Y-%m-%d',time.localtime(time.time())) + ' 15:00:00'
+        stock = self.get_kall_data(code, yest_time, today_time, autype, ktype, retry_count, pause)
+        if stock is not None:
+            if stock[-1] in self.__kstocks:
+                pass
+            else:
+                self.__kstocks.append(stock[-1])
+                stocks_list.append(stock[-1])
+                if len(self.__kstocks) > 2:
+                    self.__kstocks.pop(0)
+        return stocks_list
+
 
     def get_general_data(self, code, retry_count=3, pause=0.001):
         """
@@ -193,7 +249,13 @@ class Xueqiu:
             except Exception as e:
                 print(e)
             else:
-                stocks_list.append(stocks[symbol])
+                if stocks[symbol] in self.__generalstocks:
+                    pass
+                else:
+                    self.__generalstocks.append(stocks[symbol])
+                    stocks_list.append(stocks[symbol])
+                    if len(self.__generalstocks) > 2:
+                        self.__generalstocks.pop(0)
                 return stocks_list
 
     def _code_to_symbol(self, code):
@@ -214,5 +276,5 @@ if __name__ == '__main__':
     #print(q.get_pankou_data('601211'))
     #print(q.get_detail_data('601211'))
     #print(q.get_realtime_data('601211'))
-    #print(q.get_k_data('601211', '2016-11-15 9:30:00', '2016-11-23 15:00:00'))
+    #print(q.get_k_data('601211'))
     #print(q.get_general_data('601211'))
