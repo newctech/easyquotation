@@ -209,7 +209,7 @@ class Xueqiu:
             ...]
         """
         stocks_list = []
-        yesterday = datetime.datetime.now() + datetime.timedelta(days=-3)
+        yesterday = datetime.datetime.now() + datetime.timedelta(days=-1)
         yest_time = yesterday.strftime('%Y-%m-%d') + ' 15:00:00'
         today_time = time.strftime('%Y-%m-%d',time.localtime(time.time())) + ' 15:00:00'
         stock = self.get_kall_data(code, yest_time, today_time, autype, ktype, retry_count, pause)
