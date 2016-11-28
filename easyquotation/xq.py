@@ -63,7 +63,7 @@ class Xueqiu:
                 else:
                     self.__pankoustocks.append(stock)
                     stocks_list.append(stock)
-                    if len(self.__pankoustocks) > 2:
+                    if len(self.__pankoustocks) > 5:
                         self.__pankoustocks.pop(0)
                 return stocks_list
 
@@ -99,7 +99,7 @@ class Xueqiu:
                     else:
                         self.__detailstocks.append(stock)
                         stocks_lists.append(stock)
-                        if len(self.__detailstocks) > 10:
+                        if len(self.__detailstocks) > 20:
                             self.__detailstocks.pop(0)
                 return stocks_lists
 
@@ -134,7 +134,7 @@ class Xueqiu:
                 else:
                     self.__realtimestocks.append(stocks['chartlist'][-1])
                     stocks_list.append(stocks['chartlist'][-1])
-                    if len(self.__realtimestocks) > 2:
+                    if len(self.__realtimestocks) > 5:
                         self.__realtimestocks.pop(0)
                 return stocks_list
 
@@ -219,7 +219,7 @@ class Xueqiu:
             else:
                 self.__kstocks.append(stock[-1])
                 stocks_list.append(stock[-1])
-                if len(self.__kstocks) > 2:
+                if len(self.__kstocks) > 5:
                     self.__kstocks.pop(0)
         return stocks_list
 
@@ -254,7 +254,7 @@ class Xueqiu:
                 else:
                     self.__generalstocks.append(stocks[symbol])
                     stocks_list.append(stocks[symbol])
-                    if len(self.__generalstocks) > 2:
+                    if len(self.__generalstocks) > 5:
                         self.__generalstocks.pop(0)
                 return stocks_list
 
