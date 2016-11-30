@@ -53,8 +53,8 @@ class Xueqiu:
                 request = self.session.get(url)
                 stock = json.loads(request.text)
                 if len(stock) == 0: #no data
-                    print('no data')
-                    return None
+                    #print('no data')
+                    return stocks_list
             except Exception as e:
                 print(e)
             else:
@@ -88,8 +88,8 @@ class Xueqiu:
                 request = self.session.get(url)
                 stocks = json.loads(request.text)
                 if len(stocks['list']) == 0:  # no data
-                    print('no data')
-                    return None
+                    #print('no data')
+                    return stocks_lists
             except Exception as e:
                 print(e)
             else:
@@ -124,8 +124,8 @@ class Xueqiu:
                 request = self.session.get(url)
                 stocks = json.loads(request.text)
                 if len(stocks['chartlist']) == 0:  # no data
-                    print('no data')
-                    return None
+                    #print('no data')
+                    return stocks_list
             except Exception as e:
                 print(e)
             else:
@@ -176,8 +176,8 @@ class Xueqiu:
                 request = self.session.get(url)
                 stocks = json.loads(request.text)
                 if len(stocks['chartlist']) == 0:  # no data
-                    print('no data')
-                    return None
+                    #print('no data')
+                    return []
             except Exception as e:
                 print(e)
             else:
@@ -244,8 +244,8 @@ class Xueqiu:
                 request = self.session.get(url)
                 stocks = json.loads(request.text)
                 if len(stocks[symbol]) == 0: #no data
-                    print('no data')
-                    return None
+                    #print('no data')
+                    return stocks_list
             except Exception as e:
                 print(e)
             else:
