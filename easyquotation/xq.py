@@ -1,15 +1,21 @@
 import requests
-import json
 import time
 import datetime
+import asyncio
+import json
+import aiohttp
+import easyutils
+import yarl
+
 
 
 class Xueqiu:
 
+    max_num = 800
     pankou_api = 'http://api.xueqiu.com/stock/pankou.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479522999943&_S=E72E92&x=0.851&symbol=%s'
     detail_api = 'http://stock.xueqiu.com/stock/trade_detail.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479523207428&_S=92f079&x=0.8&count=10&symbol=%s'
     realtime_api = 'http://stock.xueqiu.com/stock/forchart/stocklist.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479522999943&_S=92f075&one_min=1&symbol=%s&period=1d'
-    kdata_api = 'http://stock.xueqiu.com/stock/forchartk/stocklist.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479522999943&_S=92f075&begin=%s&end=%s&x=0.67&type=%s&symbol=%s&period=%s'
+    kdata_api = 'http://stock.xueqiu.com/stock/forchartk/stocklist.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479522999943&_S=92f075&begin=%s&end=%s&x=0.67&type=%s&period=%s&symbol=%s'
     general_api = 'http://stock.xueqiu.com/v4/stock/quote.json?_t=1huaweiBEB74FC21E3BAEB7EFD09915E42278E8.9558902513.1479522764315.1479522999943&_S=92f075&x=0.301&return_hasexist=1&isdelay=0&code=%s'
 
     def __init__(self):
@@ -33,6 +39,76 @@ class Xueqiu:
         self.__realtimestocks = []
         self.__kstocks = []
         self.__generalstocks = []
+
+        now = time.time()
+        midnight = str(int(now - (now % 86400) + time.timezone) * 1000)
+        self.all_market_api = kdata_api % (midnight, '', 'normal', '60m', '')
+        stock_codes = self.load_stock_codes()
+        self.stock_list = self.gen_stock_list(stock_codes)
+
+    def gen_stock_list(self, stock_codes):
+        stock_with_exchange_list = [easyutils.stock.get_stock_type(code) + code[-6:] for code in stock_codes]
+
+        stock_list = []
+        request_num = len(stock_codes) // self.max_num + 1
+        for range_start in range(request_num):
+            num_start = self.max_num * range_start
+            num_end = self.max_num * (range_start + 1)
+            request_list = ','.join(stock_with_exchange_list[num_start:num_end])
+            stock_list.append(request_list)
+        return stock_list
+
+    @staticmethod
+    def load_stock_codes():
+        with open(helpers.stock_code_path()) as f:
+            return json.load(f)['stock']
+
+    @property
+    def all_market(self):
+        """return quotation with stock_code prefix key"""
+        return self.get_stock_data(self.stock_list)
+
+    def stocks(self, stock_codes):
+        if type(stock_codes) is not list:
+            stock_codes = [stock_codes]
+
+        stock_list = self.gen_stock_list(stock_codes)
+        return self.get_stock_data(stock_list)
+
+    async def get_stocks_by_range(self, params):
+        url = yarl.URL(self.all_market_api + params, encoded=True)
+        try:
+            async with self.__session.get(url, timeout=10, headers=self.headers) as r:
+                response_text = await r.text()
+                return response_text
+        except asyncio.TimeoutError:
+            return None
+
+    def get_stock_data(self, stock_list):
+        self.__session = aiohttp.ClientSession()
+        coroutines = []
+
+        for params in stock_list:
+            coroutine = self.get_stocks_by_range(params)
+            coroutines.append(coroutine)
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        res = loop.run_until_complete(asyncio.gather(*coroutines))
+
+        self.__session.close()
+        return self.format_response_data([x for x in res if x is not None])
+
+    def format_response_data(self, rep_data):
+        stock_dict = dict()
+        for stock in rep_data:
+            stock_dict[stock['stock']['symbol']] = stock['chartlist'][-1]
+        return stock_dict
+
+
+
     def get_pankou_data(self, code, retry_count=3, pause=0.001):
         """
         获取股票盘口数据
