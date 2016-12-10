@@ -6,7 +6,8 @@ import json
 import aiohttp
 import easyutils
 import yarl
-from . import helpers
+import socket
+import helpers
 
 
 
@@ -79,6 +80,7 @@ class Xueqiu:
     def get_stock_data(self, stock_list):
         self.__session = aiohttp.ClientSession()
         coroutines = []
+        result_str = ''
 
         for params in stock_list:
             coroutine = self.get_stocks_by_range(params)
@@ -88,10 +90,14 @@ class Xueqiu:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        res = loop.run_until_complete(asyncio.gather(*coroutines))
+        res_list = loop.run_until_complete(asyncio.gather(*coroutines))
 
         self.__session.close()
-        return [x for x in res if x is not None and len(x) > 2]
+
+        for res in res_list:
+            if res is not None and len(res) > 2:
+                result_str += res
+        return result_str
 
 
 
@@ -334,7 +340,14 @@ class Xueqiu:
 
 
 if __name__ == '__main__':
+    clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_address = ('127.0.0.1', 8888)
+    clientsocket.connect(server_address)
     q = Xueqiu()
+    while True:
+        data = q.all_market
+        clientsocket.sendall(data.encode(encoding='utf_8') + 'EOF'.encode(encoding='utf_8'))
+    clientsocket.close()
     #print(q.get_pankou_data('601211'))
     #print(q.get_detail_data('601211'))
     #print(q.get_realtime_data('601211'))
