@@ -184,7 +184,7 @@ setup(
         license='BSD',
         url='https://github.com/shidenggui/easyquotation',
         keywords='China stock trade',
-        install_requires=['requests', 'yarl', 'aiohttp>=1.1.1', 'six', 'easyutils'],
+        install_requires=['requests', 'yarl', 'aiohttp>=1.1.1', 'six', 'easyutils', 'socket'],
         classifiers=['Development Status :: 4 - Beta',
                      'Programming Language :: Python :: 3.5',
                      'License :: OSI Approved :: BSD License'],
