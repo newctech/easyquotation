@@ -1,10 +1,8 @@
 import asyncio
 import json
-import warnings
 
 import aiohttp
 import easyutils
-import yarl
 
 from . import helpers
 
@@ -38,19 +36,9 @@ class BaseQuotation:
 
     @property
     def all(self):
-<<<<<<< HEAD
         stock_data = self.get_stock_data(self.stock_list)
         stock_data['sh000001'] = self.stocks('sh000001')['000001']
         return stock_data
-=======
-        warnings.warn('use all_market instead', DeprecationWarning)
-        return self.get_stock_data(self.stock_list)
->>>>>>> shidenggui/master
-
-    @property
-    def all_market(self):
-        """return quotation with stock_code prefix key"""
-        return self.get_stock_data(self.stock_list, prefix=True)
 
     def stocks(self, stock_codes):
         if type(stock_codes) is not list:
@@ -61,27 +49,16 @@ class BaseQuotation:
 
     async def get_stocks_by_range(self, params):
         headers = {
-            'Accept-Encoding': 'gzip, deflate, sdch',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36'
+            'Accept-Encoding': 'gzip'
         }
-        url = yarl.URL(self.stock_api + params, encoded=True)
         try:
-<<<<<<< HEAD
             async with aiohttp.get(self.stock_api + params, headers=headers) as r:
-=======
-            async with self._session.get(url, timeout=10, headers=headers) as r:
->>>>>>> shidenggui/master
                 response_text = await r.text()
                 return response_text
         except asyncio.TimeoutError:
             return None
 
-<<<<<<< HEAD
     def get_stock_data(self, stock_list):
-=======
-    def get_stock_data(self, stock_list, **kwargs):
-        self._session = aiohttp.ClientSession()
->>>>>>> shidenggui/master
         coroutines = []
         for params in stock_list:
             coroutine = self.get_stocks_by_range(params)
@@ -94,12 +71,7 @@ class BaseQuotation:
             asyncio.set_event_loop(loop)
         res = loop.run_until_complete(asyncio.gather(*coroutines))
 
-<<<<<<< HEAD
         return self.format_response_data([x for x in res if x is not None])
-=======
-        self._session.close()
-        return self.format_response_data([x for x in res if x is not None], **kwargs)
->>>>>>> shidenggui/master
 
-    def format_response_data(self, rep_data, **kwargs):
+    def format_response_data(self, rep_data):
         pass
