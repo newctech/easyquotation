@@ -7,7 +7,7 @@ import aiohttp
 import easyutils
 import yarl
 import socket
-import helpers
+from . import helpers
 
 
 
