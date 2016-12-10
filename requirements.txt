@@ -3,4 +3,3 @@ requests
 yarl
 aiohttp>=1.1.1
 easyutils
-socket
