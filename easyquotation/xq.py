@@ -344,10 +344,15 @@ if __name__ == '__main__':
     server_address = ('127.0.0.1', 8888)
     clientsocket.connect(server_address)
     q = Xueqiu()
-    while True:
-        data = q.all_market
-        clientsocket.sendall(data.encode(encoding='utf_8') + 'EOF'.encode(encoding='utf_8'))
-    clientsocket.close()
+    try:
+        while True:
+            data = q.all_market
+            clientsocket.sendall(data.encode(encoding='utf_8') + 'EOF'.encode(encoding='utf_8'))
+    except:
+        pass
+    finally:
+        clientsocket.sendall('EOF'.encode(encoding='utf_8'))
+        clientsocket.close()
     #print(q.get_pankou_data('601211'))
     #print(q.get_detail_data('601211'))
     #print(q.get_realtime_data('601211'))
