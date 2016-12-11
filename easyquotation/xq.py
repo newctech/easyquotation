@@ -93,7 +93,7 @@ class Xueqiu:
         res = loop.run_until_complete(asyncio.gather(*coroutines))
 
         self.__session.close()
-        return ','.join([x for x in res if x is not None and len(x) > 2])
+        return '[' + ','.join([x for x in res if x is not None and len(x) > 2]) + ']'
 
 
 
