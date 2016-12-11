@@ -67,7 +67,15 @@ class Xueqiu:
     @staticmethod
     def load_stock_codes():
         with open(helpers.stock_code_path()) as f:
-            return json.load(f)['stock']
+            codes = json.load(f)['stock']
+        stock_codes = []
+        for index in range(len(codes)):
+            if codes[index].startswith('000') or \
+                    codes[index].startswith('002') or \
+                    codes[index].startswith('600') or \
+                    codes[index].startswith('601'):
+                stock_codes.append(codes[index])
+        return stock_codes
 
     @property
     def all_market(self):
