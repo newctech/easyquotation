@@ -1,4 +1,5 @@
 import requests
+import sys
 import time
 import datetime
 import asyncio
@@ -41,11 +42,23 @@ class Xueqiu:
         self.__kstocks = []
         self.__generalstocks = []
 
-        now = time.time()
-        midnight = str(int(now - (now % 86400) + time.timezone) * 1000)
-        self.all_market_api = self.kdata_api % (midnight, '', 'normal', '60m', '')
+        self.all_market_api = self.gen_all_market_api()
         stock_codes = self.load_stock_codes()
         self.stock_list = self.gen_stock_list(stock_codes)
+
+    def gen_all_market_api(self, start='midnight', ktype='60m'):
+        if start == 'midnight':
+            now = time.time()
+            begin = str(int(now - (now % 86400) + time.timezone) * 1000)
+        else:
+            if len(start) != 0:
+                start_Array = time.strptime(start, "%Y-%m-%d %H:%M:%S")
+                begin = str(int(time.mktime(start_Array) * 1000))
+            else:
+                begin = ''
+        api = self.kdata_api % (begin, '', 'normal', ktype, '')
+        return api
+
 
     def gen_stock_list(self, stock_codes):
         stock_with_exchange_list = [easyutils.stock.get_stock_type(code) + code[-6:] for code in stock_codes]
@@ -340,6 +353,9 @@ if __name__ == '__main__':
     server_address = ('127.0.0.1', 8888)
     clientsocket.connect(server_address)
     q = Xueqiu()
+    if len(sys.argv) == 1 and sys.argv[1] == 'init':
+        #可获取一周内的数据,数据太多可能导致程序异常
+        q.all_market_api = q.gen_all_market_api(start='2016-12-05 09:00:00')
     try:
         while True:
             data = q.all_market
