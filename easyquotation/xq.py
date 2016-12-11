@@ -90,14 +90,10 @@ class Xueqiu:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        res_list = loop.run_until_complete(asyncio.gather(*coroutines))
+        res = loop.run_until_complete(asyncio.gather(*coroutines))
 
         self.__session.close()
-
-        for res in res_list:
-            if res is not None and len(res) > 2:
-                result_str += res
-        return result_str
+        return ','.join([x for x in res if x is not None and len(x) > 2])
 
 
 
