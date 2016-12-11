@@ -351,7 +351,6 @@ if __name__ == '__main__':
     except:
         pass
     finally:
-        clientsocket.sendall('EOF'.encode(encoding='utf_8'))
         clientsocket.close()
     #print(q.get_pankou_data('601211'))
     #print(q.get_detail_data('601211'))
