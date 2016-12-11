@@ -233,7 +233,7 @@ class Xueqiu:
         if len(end) != 0:
             end_Array = time.strptime(end, "%Y-%m-%d %H:%M:%S")
             end = str(int(time.mktime(end_Array) * 1000))
-        url = self.kdata_api % (start, end, autype, symbol, ktype)
+        url = self.kdata_api % (start, end, autype, ktype, symbol)
         for _ in range(retry_count):
             time.sleep(pause)
             try:
