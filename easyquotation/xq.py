@@ -47,7 +47,7 @@ class Xueqiu:
         stock_codes = self.load_stock_codes()
         self.stock_list = self.gen_stock_list(stock_codes)
 
-    def gen_all_market_api(self, start='midnight', ktype='60m'):
+    def gen_all_market_api(self, start='midnight', ktype='1day'):
         if start == 'midnight':
             now = time.time()
             begin = str(int(now - (now % 86400) + time.timezone) * 1000)
