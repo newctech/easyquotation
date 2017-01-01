@@ -50,7 +50,7 @@ class MySina:
                 text = text.replace('"{symbol', '{"symbol')
                 text = text.replace('{symbol', '{"symbol"')
                 stock_res = json.loads(text)
-                if len(stock_res) == 0: #no data
+                if stock_res is None or len(stock_res) == 0: #no data
                     #print('no data')
                     return stocks_list
             except Exception as e:
