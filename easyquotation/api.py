@@ -5,6 +5,7 @@ from .boc import Boc
 from .jsl import Jsl
 from .leverfun import Leverfun
 from .sina import Sina
+from .mysina import MySina
 from .xq import Xueqiu
 from .tencent import Tencent
 
@@ -16,6 +17,8 @@ if PY_VERSION < (3, 5):
 def use(source):
     if source in ['sina']:
         return Sina()
+    if source in ['mysina']:
+        return MySina()
     if source in ['xq']:
         return Xueqiu()
     if source in ['leverfun', 'lf']:
