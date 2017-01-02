@@ -47,7 +47,7 @@ class Xueqiu:
         stock_codes = self.load_stock_codes()
         self.stock_list = self.gen_stock_list(stock_codes)
 
-    def gen_all_market_api(self, start='midnight', ktype='1day'):
+    def gen_all_market_api(self, start='midnight', end='', ktype='1day'):
         if start == 'midnight':
             now = time.time()
             begin = str(int(now - (now % 86400) + time.timezone) * 1000)
@@ -57,7 +57,10 @@ class Xueqiu:
                 begin = str(int(time.mktime(start_Array) * 1000))
             else:
                 begin = ''
-        api = self.kdata_api % (begin, '', 'normal', ktype, '')
+        if len(end) != 0:
+            start_Array = time.strptime(end, "%Y-%m-%d %H:%M:%S")
+            end = str(int(time.mktime(start_Array) * 1000))
+        api = self.kdata_api % (begin, end, 'normal', ktype, '')
         return api
 
 
@@ -361,16 +364,18 @@ if __name__ == '__main__':
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = ('127.0.0.1', 8888)
     clientsocket.connect(server_address)
+    print("update_stock_codes")
+    helpers.update_stock_codes()
     q = Xueqiu()
     if len(sys.argv) == 2 and sys.argv[1] == 'init':
         #可获取一周内的数据,数据太多可能导致程序异常
-        q.all_market_api = q.gen_all_market_api(start='2016-12-05 09:00:00')
+        q.all_market_api = q.gen_all_market_api(start='2016-12-05 09:00:00', end='')
     try:
         while True:
             data = q.all_market
             clientsocket.sendall(data.encode(encoding='utf_8') + 'EOF'.encode(encoding='utf_8'))
-            #print(len(data))
-            #time.sleep(10000000)
+            print(len(data))
+            time.sleep(40)
     except:
         pass
     finally:
