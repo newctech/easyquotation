@@ -36,7 +36,6 @@ class MySina:
         -------
             [{symbol:"sh601211",name:"国泰君安",opendate:"2016-12-30",minvol:"0",voltype:"12",totalvol:"6409580",totalvolpct:"0.332",totalamt:"119029877",totalamtpct:"0.332",avgprice:"18.571",kuvolume:"4059125",kuamount:"75451044",kevolume:"0",keamount:"0",kdvolume:"2350455",kdamount:"43578832",stockvol:"19333129",stockamt:"358337978"}]
         """
-        stocks_list = []
         symbol = self._code_to_symbol(code)
         if day is None:
             day = time.strftime('%Y-%m-%d', time.localtime(time.time()))
@@ -49,22 +48,20 @@ class MySina:
                 text = reg.sub(r',"\1":', request)
                 text = text.replace('"{symbol', '{"symbol')
                 text = text.replace('{symbol', '{"symbol"')
-                stock_res = json.loads(text)
-                if stock_res is None or len(stock_res) == 0: #no data
+                stock_list = json.loads(text)
+                if stock_list is None or len(stock_list) == 0: #no data
                     #print('no data')
-                    return stocks_list
+                    return []
             except Exception as e:
                 print(e)
             else:
-                stock = stock_res[-1]
-                if stock in self.__dadanstocks:
+                if stock_list in self.__dadanstocks:
                     pass
                 else:
-                    self.__dadanstocks.append(stock)
-                    stocks_list.append(stock)
+                    self.__dadanstocks.append(stock_list)
                     if len(self.__dadanstocks) > 5:
                         self.__dadanstocks.pop(0)
-                return stocks_list
+                return stock_list
 
     def _code_to_symbol(self, code):
         """
