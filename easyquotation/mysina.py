@@ -3,10 +3,17 @@ import requests
 import time
 import re
 import json
+import asyncio
+import aiohttp
+import easyutils
+import yarl
+import socket
+from . import helpers
 
 
 class MySina:
     dadan_api = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillSum?symbol=%s&num=60&sort=ticktime&asc=0&volume=%s&amount=%s&type=0&day=%s'
+    dadan_detail_api = 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillList?num=10000&page=1&sort=ticktime&asc=0&volume=%s&amount=%s&type=0&day=%s&symbol=%s'
 
     def __init__(self):
         self.headers = {
@@ -16,8 +23,72 @@ class MySina:
         self.session.headers.update(self.headers)
 
         self.__dadanstocks = []
+        self.all_dadan_detail_api = self.gen_all_dadan_detail_api()
+        stock_codes = self.load_stock_codes()
+        self.stock_list = self.gen_stock_list(stock_codes)
 
 
+    def gen_all_dadan_detail_api(self, volume='500000', amount='0', day=None):
+        if day is None:
+            day = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+        api = self.dadan_detail_api % (volume, amount, day, '')
+        return api
+
+    def gen_stock_list(self, stock_codes):
+        stock_with_exchange_list = [easyutils.stock.get_stock_type(code) + code[-6:] for code in stock_codes]
+        return stock_with_exchange_list
+
+    @staticmethod
+    def load_stock_codes():
+        with open(helpers.stock_code_path()) as f:
+            codes = json.load(f)['stock']
+        stock_codes = []
+        for index in range(len(codes)):
+            if codes[index].startswith('000') or \
+                    codes[index].startswith('002') or \
+                    codes[index].startswith('600') or \
+                    codes[index].startswith('601'):
+                stock_codes.append(codes[index])
+        return stock_codes
+
+    @property
+    def all_dadan_detail(self):
+        """return quotation with stock_code prefix key"""
+        return self.get_stock_data(self.stock_list)
+    def dadan_detail_stocks(self, stock_codes):
+        if type(stock_codes) is not list:
+            stock_codes = [stock_codes]
+        stock_list = self.gen_stock_list(stock_codes)
+        return self.get_stock_data(stock_list)
+    async def get_stocks_by_range(self, params):
+        url = yarl.URL(self.all_dadan_detail_api + params, encoded=True)
+        try:
+            async with self.__session.get(url, timeout=10, headers=self.headers) as r:
+                response_text = await r.text()
+                return response_text
+        except asyncio.TimeoutError:
+            return None
+
+    def get_stock_data(self, stock_list):
+        self.__session = aiohttp.ClientSession()
+        coroutines = []
+        result_str = ''
+        for params in stock_list:
+            coroutine = self.get_stocks_by_range(params)
+            coroutines.append(coroutine)
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        res = loop.run_until_complete(asyncio.gather(*coroutines))
+        self.__session.close()
+        result =  '[' + ','.join([x for x in res if x is not None and len(x) > 4]) + ']'
+        reg = re.compile(r'\,(\w*?)\:')
+        text = reg.sub(r',"\1":', result)
+        text = text.replace('"{symbol', '{"symbol')
+        text = text.replace('{symbol', '{"symbol"')
+        return text
 
     def get_dadan_data(self, code, volume='0', amount='0', day=None, retry_count=3, pause=0.001):
         """
@@ -78,5 +149,9 @@ class MySina:
 
 if __name__ == '__main__':
     q = MySina()
+    q.all_dadan_detail_api = q.gen_all_dadan_detail_api(volume='2000000', day='2017-01-06')
+    ret = q.all_dadan_detail
+    stock_list = json.loads(ret)
+    print(stock_list)
 
-    print(q.get_dadan_data('601211', volume='50000', day='2016-12-30'))
+    #print(q.get_dadan_data('601211', volume='50000', day='2016-12-30'))
