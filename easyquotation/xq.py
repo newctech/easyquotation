@@ -361,6 +361,7 @@ class Xueqiu:
 
 
 if __name__ == '__main__':
+    pause = 40
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = ('127.0.0.1', 8888)
     clientsocket.connect(server_address)
@@ -369,13 +370,14 @@ if __name__ == '__main__':
     q = Xueqiu()
     if len(sys.argv) == 2 and sys.argv[1] == 'init':
         #可获取一周内的数据,数据太多可能导致程序异常
+        pause = pause * 100
         q.all_market_api = q.gen_all_market_api(start='2016-12-05 09:00:00', end='')
     try:
         while True:
             data = q.all_market
             clientsocket.sendall(data.encode(encoding='utf_8') + 'EOF'.encode(encoding='utf_8'))
             print(len(data))
-            time.sleep(40)
+            time.sleep(pause)
     except:
         pass
     finally:
